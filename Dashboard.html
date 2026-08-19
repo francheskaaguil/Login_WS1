@@ -1,25 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <title>Document</title>
+    <title>Dashboard</title>
 </head>
+
 <body class="dashboard-page">
+
     <aside class="sidebar">
-        <h2>Sidebar</h2>
-        <ul>
-            <li><a href="index.html">Logout</a></li>
-        </ul>
-    </aside>
-    <main class="dashboard"> 
-        <div class="dashboard-container">
-            <h1>Dashboard</h1>
-            <img src="gela.jpeg" alt="Logo" class="logo" width="100" height="100">
-            <h3>Francheska Nicole Aguil</h3>
-            
+
+        <div class="sidebar-logo">
+
+            <img src="2.webp" alt="Logo">
+
+            <h2>My Dashboard</h2>
+
         </div>
+
+        <ul>
+
+            <li>
+                <a class="active" href="Dashboard.html">
+                    Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="profile.html">
+                    Profile
+                </a>
+            </li>
+
+            <li>
+                <a class="logout" href="#" onclick="logout()">
+                    Logout
+                </a>
+            </li>
+
+        </ul>
+
+    </aside>
+
+
+    <main class="dashboard">
+
+        <header class="topbar">
+
+            <h1 id="welcomeMessage">
+                Welcome back!
+            </h1>
+
+            <img
+                src="gela.jpeg"
+                alt="Profile"
+                class="profile-small"
+                width="100"
+                height="100"
+            >
+
+        </header>
+
+
+        <section class="profile-card">
+
+            <div>
+
+                <h2 id="dashboardName">
+                    Loading...
+                </h2>
+
+                <p>
+                    BS Information Technology
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <section class="welcome-box">
+
+            <h2>
+                Welcome to your Dashboard!
+            </h2>
+
+            <p>
+                You have successfully logged in to your account.
+            </p>
+
+        </section>
+
     </main>
+
+
+    <script>
+
+        const user = JSON.parse(
+            localStorage.getItem("user") || "null"
+        );
+
+        if (!user) {
+
+            location.href = "index.html";
+
+        } else {
+
+            document.getElementById(
+                "welcomeMessage"
+            ).textContent =
+                `Welcome back, ${user.firstName}!`;
+
+            document.getElementById(
+                "dashboardName"
+            ).textContent =
+                `${user.firstName} ${user.lastName}`;
+        }
+
+
+        function logout() {
+
+            localStorage.removeItem("user");
+
+            location.href = "index.html";
+        }
+
+    </script>
+
 </body>
 </html>
