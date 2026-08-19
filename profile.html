@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>My Profile</title>
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-logo">
+            <img src="2.webp" alt="Logo">
+            <h2>My Dashboard</h2>
+        </div>
+
+        <ul>
+            <li>
+                <a href="Dashboard.html">
+                    Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a class="active" href="profile.html">
+                    Profile
+                </a>
+            </li>
+
+            <li>
+                <a class="logout" href="#" onclick="logout()">
+                    Logout
+                </a>
+            </li>
+        </ul>
+
+    </aside>
+
+    <main class="dashboard">
+
+        <h1>My Profile</h1>
+
+        <section class="profile-card">
+
+            <img
+                src="gela.jpeg"
+                alt="Profile Picture"
+                class="profile-picture"
+            >
+
+            <div>
+
+                <h2 id="fullName">
+                    Loading...
+                </h2>
+
+                <p>
+                    BS Information Technology
+                </p>
+
+                <span class="status">
+                    ● Active
+                </span>
+
+            </div>
+
+        </section>
+
+        <section class="info-card">
+
+            <header class="info-header">
+
+                <h2>
+                    Personal Information
+                </h2>
+
+                <div id="editControls">
+
+                    <button
+                        class="edit-button"
+                        onclick="enableEdit()"
+                    >
+                        Edit Profile
+                    </button>
+
+                </div>
+
+            </header>
+
+            <div
+                class="info-grid"
+                id="personalInfo"
+            >
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+
+        const fields = {
+            firstName: "First Name",
+            lastName: "Last Name",
+            email: "Email",
+            dateOfBirth: "Date of Birth",
+            phone: "Phone Number",
+            gender: "Gender",
+            address: "Address"
+        };
+
+        const editable = [
+            "firstName",
+            "lastName",
+            "dateOfBirth",
+            "phone",
+            "gender",
+            "address"
+        ];
+
+        let currentUser;
+
+        function controls() {
+
+            document.getElementById("editControls").innerHTML = `
+                <button
+                    class="edit-button"
+                    onclick="enableEdit()"
+                >
+                    Edit Profile
+                </button>
+            `;
+
+        }
+
+        function render(user) {
+
+            document.getElementById("fullName").textContent =
+                `${user.firstName} ${user.lastName}`;
+
+            document.getElementById("personalInfo").innerHTML =
+                Object.entries(fields)
+                    .map(([key, label]) => `
+                        <div class="${key === "address" ? "full-width" : ""}">
+
+                            <label>${label}</label>
+
+                            <p id="${key}">
+                                ${user[key] || "-"}
+                            </p>
+
+                        </div>
+                    `)
+                    .join("");
+
+        }
+
+        async function loadProfile() {
+
+            const saved = JSON.parse(
+                localStorage.getItem("user") || "null"
+            );
+
+            if (!saved) {
+                location.href = "index.html";
+                return;
+            }
+
+            try {
+
+                const response = await fetch(
+                    `/api/profile?email=${encodeURIComponent(saved.email)}`
+                );
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    alert(result.message);
+                    return;
+                }
+
+                currentUser = result.user;
+
+                render(currentUser);
+
+            } catch (error) {
+
+                alert(
+                    "Cannot connect to the server. Make sure Flask is running."
+                );
+
+            }
+
+        }
+
+        function enableEdit() {
+
+            editable.forEach(key => {
+
+                const value = currentUser[key] || "";
+
+                if (key === "gender") {
+
+                    document.getElementById(key).innerHTML = `
+                        <select
+                            class="edit-input"
+                            id="edit-${key}"
+                        >
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    `;
+
+                } else {
+
+                    const type =
+                        key === "dateOfBirth"
+                            ? "date"
+                            : "text";
+
+                    document.getElementById(key).innerHTML = `
+                        <input
+                            class="edit-input"
+                            id="edit-${key}"
+                            type="${type}"
+                            value="${value}"
+                        >
+                    `;
+
+                }
+
+                document.getElementById(
+                    `edit-${key}`
+                ).value = value;
+
+            });
+
+            document.getElementById("editControls").innerHTML = `
+
+                <button
+                    class="edit-button"
+                    onclick="saveProfile()"
+                >
+                    Save
+                </button>
+
+                <button
+                    class="cancel-button"
+                    onclick="render(currentUser); controls();"
+                >
+                    Cancel
+                </button>
+
+            `;
+
+        }
+
+        async function saveProfile() {
+
+            const user = {
+                email: currentUser.email
+            };
+
+            editable.forEach(key => {
+
+                user[key] =
+                    document.getElementById(
+                        `edit-${key}`
+                    ).value;
+
+            });
+
+            try {
+
+                const response = await fetch(
+                    "/api/profile",
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(user)
+                    }
+                );
+
+                const result =
+                    await response.json();
+
+                if (!result.success) {
+                    alert(result.message);
+                    return;
+                }
+
+                currentUser = {
+                    ...currentUser,
+                    ...user
+                };
+
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(currentUser)
+                );
+
+                render(currentUser);
+
+                controls();
+
+                alert(
+                    "Profile updated successfully!"
+                );
+
+            } catch (error) {
+
+                alert(
+                    "Cannot connect to the server. Make sure Flask is running."
+                );
+
+            }
+
+        }
+
+        function logout() {
+
+            localStorage.removeItem("user");
+
+            location.href = "index.html";
+
+        }
+
+        loadProfile();
+
+    </script>
+
+</body>
+
+</html>
